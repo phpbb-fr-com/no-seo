@@ -40,7 +40,7 @@ class listener implements EventSubscriberInterface
 		$this->php_ext = $this->path_helper->get_php_ext();
 		$this->phpbb_root_path = $this->path_helper->get_phpbb_root_path();
 		$this->request = $request;
-		
+
 		if (!defined('PHPBB_SEO_CACHE'))
 		{
 			define('PHPBB_SEO_CACHE', $this->phpbb_root_path . 'ext/empreintesduweb/seoregression/includes/phpbb_cache.' . $this->php_ext);
@@ -85,20 +85,41 @@ class listener implements EventSubscriberInterface
 
 		$seo_rules = array(
 			'post'  => array(
+				// phpBB2 version
+				array('pattern' => array('before' => 'viewpost_', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p='),
+
+				// phpBB3 versions
 				array('pattern' => array('before' => 'post', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p='),
 				array('pattern' => array('before' => 'message', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p='),
 			),
 			'topic' => array(
+				// phpBB2 version
+				/*
+				 * http://forums.phpbb-fr.com/viewtopic_32090.html
+				 * http://forums.phpbb-fr.com/viewtopic_32090_s30.html (start 30)
+				 * http://forums.phpbb-fr.com/viewtopic_32215_pd0_poasc_s30.html (start 30 + ordering parameters, we will just ignore them…)
+				 */
+				array('pattern' => array('before' => 'viewtopic_', 'after' => '.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '(?:_.+)?_s', 'after' => '.html')),
+
+				// phpBB3 versions
 				array('pattern' => array('before' => 'topic', 'after' => '\.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '\.html')),
 				array('pattern' => array('before' => 'sujet', 'after' => '\.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '\.html')),
 				array('pattern' => array('before' => '-t', 'after' => '\.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '\.html')),
 			),
 			'user'  => array(
+				// phpBB2 version
+				array('pattern' => array('before' => 'memberlist_viewprofile_', 'after' => '\.html'), 'replacement' => 'memberlist.php?mode=viewprofile&u='),
+
+				// phpBB3 versions
 				array('pattern' => array('before' => '-u', 'after' => '\/'), 'replacement' => 'memberlist.php?mode=viewprofile&u='),
 				array('pattern' => array('before' => 'member', 'after' => '\.html'), 'replacement' => 'memberlist.php?mode=viewprofile&u='),
 				array('pattern' => array('before' => 'membre', 'after' => '\.html'), 'replacement' => 'memberlist.php?mode=viewprofile&u='),
 			),
 			'group' => array(
+				// phpBB2 version
+				array('pattern' => array('before' => 'memberlist_group_', 'after' => '\.html'), 'replacement' => 'memberlist.php?mode=group&g='),
+
+				// phpBB3 version
 				array('pattern' => array('before' => '-g', 'after' => '\/'), 'replacement' => 'memberlist.php?mode=group&g=', 'paginate' => array('before' => '-', 'after' => '\.html')),
 			),
 			'forum' => array(
