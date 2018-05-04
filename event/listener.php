@@ -40,10 +40,15 @@ class listener implements EventSubscriberInterface
 		$this->php_ext = $this->path_helper->get_php_ext();
 		$this->phpbb_root_path = $this->path_helper->get_phpbb_root_path();
 		$this->request = $request;
-
-		if (file_exists($this->phpbb_root_path . 'ext/empreintesduweb/seoregression/includes/phpbb_cache.' . $this->php_ext))
+		
+		if (!defined('PHPBB_SEO_CACHE'))
 		{
-			include_once($this->phpbb_root_path . 'ext/empreintesduweb/seoregression/includes/phpbb_cache.' . $this->php_ext);
+			define('PHPBB_SEO_CACHE', $this->phpbb_root_path . 'ext/empreintesduweb/seoregression/includes/phpbb_cache.' . $this->php_ext);
+		}
+
+		if (file_exists(PHPBB_SEO_CACHE))
+		{
+			include(PHPBB_SEO_CACHE);
 		}
 	}
 
