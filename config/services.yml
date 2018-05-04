@@ -1,0 +1,9 @@
+services:
+   empreintesduweb.seoregression.listener:
+        class: empreintesduweb\seoregression\event\listener
+        arguments:
+            - '@config'
+            - '@path_helper'
+            - '@request'
+        tags:
+            - { name: event.listener }

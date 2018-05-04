@@ -1,0 +1,31 @@
+{
+	"name": "empreintesduweb/seoregression",
+	"type": "phpbb-extension",
+	"description": "Cette extension vous permet de passer d’une version phpBB SEO à une version phpBB sans réécriture des URL, le tout avec des redirections 301 afin de ne pas perdre en référencement.",
+	"homepage": "https://www.empreintesduweb.com/",
+	"version": "1.2.0",
+	"keywords": ["seo", "redirection", "référencement"],
+	"license": "GPL-2.0",
+	"authors": [
+		{
+			"name": "Stéphane SOMMER",
+			"username": "Steph",
+			"homepage": "https://www.empreintesduweb.com/",
+			"role": "Lead developer"
+		},
+		{
+			"name": "Skouat",
+			"homepage": "https://github.com/Skouat",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"php": ">=5.4"
+	},
+	"extra": {
+		"display-name": "Annuler la réécriture d'url et activer la redirection 301",
+		"soft-require": {
+			"phpbb/phpbb": ">=3.1.7"
+		}
+	}
+}
