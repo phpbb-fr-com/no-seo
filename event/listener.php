@@ -85,8 +85,8 @@ class listener implements EventSubscriberInterface
 
 		$seo_rules = array(
 			'post'  => array(
-				array('pattern' => array('before' => 'post', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p=', 'paginate' => array('before' => '-', 'after' => '\.html')),
-				array('pattern' => array('before' => 'message', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p=', 'paginate' => array('before' => '-', 'after' => '\.html')),
+				array('pattern' => array('before' => 'post', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p='),
+				array('pattern' => array('before' => 'message', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p='),
 			),
 			'topic' => array(
 				array('pattern' => array('before' => 'topic', 'after' => '\.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '\.html')),
