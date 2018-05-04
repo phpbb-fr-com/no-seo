@@ -85,25 +85,25 @@ class listener implements EventSubscriberInterface
 
 		$seo_rules = array(
 			'post'  => array(
-				array('pattern' => array('before' => 'post', 'after' => '.html'), 'replacement' => 'viewtopic.php?p=', 'paginate' => array('before' => '-', 'after' => '.html')),
-				array('pattern' => array('before' => 'message', 'after' => '.html'), 'replacement' => 'viewtopic.php?p=', 'paginate' => array('before' => '-', 'after' => '.html')),
+				array('pattern' => array('before' => 'post', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p=', 'paginate' => array('before' => '-', 'after' => '\.html')),
+				array('pattern' => array('before' => 'message', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p=', 'paginate' => array('before' => '-', 'after' => '\.html')),
 			),
 			'topic' => array(
-				array('pattern' => array('before' => 'topic', 'after' => '.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '.html')),
-				array('pattern' => array('before' => 'sujet', 'after' => '.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '.html')),
-				array('pattern' => array('before' => '-t', 'after' => '.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '.html')),
+				array('pattern' => array('before' => 'topic', 'after' => '\.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '\.html')),
+				array('pattern' => array('before' => 'sujet', 'after' => '\.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '\.html')),
+				array('pattern' => array('before' => '-t', 'after' => '\.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '\.html')),
 			),
 			'user'  => array(
 				array('pattern' => array('before' => '-u', 'after' => '\/'), 'replacement' => 'memberlist.php?mode=viewprofile&u='),
-				array('pattern' => array('before' => 'member', 'after' => '.html'), 'replacement' => 'memberlist.php?mode=viewprofile&u='),
-				array('pattern' => array('before' => 'membre', 'after' => '.html'), 'replacement' => 'memberlist.php?mode=viewprofile&u='),
+				array('pattern' => array('before' => 'member', 'after' => '\.html'), 'replacement' => 'memberlist.php?mode=viewprofile&u='),
+				array('pattern' => array('before' => 'membre', 'after' => '\.html'), 'replacement' => 'memberlist.php?mode=viewprofile&u='),
 			),
 			'group' => array(
-				array('pattern' => array('before' => '-g', 'after' => '\/'), 'replacement' => 'memberlist.php?mode=group&g=', 'paginate' => array('before' => '-', 'after' => '.html')),
+				array('pattern' => array('before' => '-g', 'after' => '\/'), 'replacement' => 'memberlist.php?mode=group&g=', 'paginate' => array('before' => '-', 'after' => '\.html')),
 			),
 			'forum' => array(
-				array('pattern' => array('before' => 'forum', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '.html')),
-				array('pattern' => array('before' => '-f', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '.html')),
+				array('pattern' => array('before' => 'forum', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '\.html')),
+				array('pattern' => array('before' => '-f', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '\.html')),
 			),
 		);
 
@@ -113,7 +113,7 @@ class listener implements EventSubscriberInterface
 			array('pattern'  => 'DoNotDeleteThisArray', 'replacement' => 'viewforum.php?f=',
 				  'paginate' => array(
 					  'before' => 'page',
-					  'after'  => '.html',
+					  'after'  => '\.html',
 				  ),
 			),
 		);
