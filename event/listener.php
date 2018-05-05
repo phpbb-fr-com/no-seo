@@ -126,6 +126,10 @@ class listener implements EventSubscriberInterface
 				array('pattern' => array('before' => 'forum', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '\.html')),
 				array('pattern' => array('before' => '-f', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '\.html')),
 			),
+			'team' => array(
+				array('pattern' => 'team\.html', 'replacement' => 'memberlist.php?mode=team'),
+				array('pattern' => 'equipe\.html', 'replacement' => 'memberlist.php?mode=team'),
+			),
 		);
 
 		// Do not remove the following array
@@ -145,13 +149,23 @@ class listener implements EventSubscriberInterface
 		$uri = $this->request->server('REQUEST_URI');
 		$original_url_parts = $this->path_helper->get_url_parts($uri);
 
-		$base_uri = $original_url_parts['base'];
+		if (strpos($original_url_parts['base'], $this->config['script_path']) === 0)
+		{
+			$base_uri = substr($original_url_parts['base'], strlen($this->config['script_path']));
+			if (substr($base_uri, 0, 1) !== '/')
+			{
+				$base_uri = '/' . $base_uri;
+			}
+		}
+		else
+		{
+			// We are outside of the forum, don't rewrite
+			return;
+		}
 
 		// Check the following parameters before rebuilding the URI
 		$allow_uri_rebuild_params[] = !strpos($base_uri, '.' . $this->php_ext);
 		$allow_uri_rebuild_params[] = $base_uri !== '/';
-		$allow_uri_rebuild_params[] = $base_uri !== $this->config['script_path'];
-		$allow_uri_rebuild_params[] = $base_uri !== $this->config['script_path'] . '/';
 
 		if ($this->allow_uri_rebuild($allow_uri_rebuild_params))
 		{
@@ -195,6 +209,11 @@ class listener implements EventSubscriberInterface
 	private function build_url($uri, $base_uri, $seo_params, $no_ids = false)
 	{
 		$build_url = '';
+		
+		if ($this->check_static_rewrite($base_uri, $seo_params, $build_url))
+		{
+			return $build_url;
+		}
 
 		$uri_clean = $this->strip_forum_name($base_uri);
 
@@ -247,6 +266,39 @@ class listener implements EventSubscriberInterface
 		}
 
 		return $build_url;
+	}
+	
+	/**
+	 * Check for static rewrites
+	 *
+	 * @param string $uri
+	 * @param string $base_uri
+	 * @param array  $seo_params
+	 * @param string &$build_url
+	 *
+	 * @return bool
+	 * @access private
+	 */
+	private function check_static_rewrite($base_uri, $seo_params, &$build_url)
+	{
+		foreach ($seo_params as $seo_param)
+		{
+			if (!is_string($seo_param[0]['pattern']))
+			{
+				continue;
+			}
+			
+			foreach ($seo_param as $seo_config)
+			{
+				if (preg_match('#^/(' . $seo_config['pattern'] . ')$#', $base_uri))
+				{
+					$build_url = $seo_config['replacement'];
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 
 	/**
