@@ -3,7 +3,7 @@
 	"type": "phpbb-extension",
 	"description": "Cette extension vous permet de passer d’une version phpBB SEO à une version phpBB sans réécriture des URL, le tout avec des redirections 301 afin de ne pas perdre en référencement.",
 	"homepage": "https://www.empreintesduweb.com/",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"keywords": ["seo", "redirection", "référencement"],
 	"license": "GPL-2.0",
 	"authors": [
