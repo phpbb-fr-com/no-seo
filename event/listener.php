@@ -50,6 +50,12 @@ class listener implements EventSubscriberInterface
 		{
 			include(PHPBB_SEO_CACHE);
 		}
+
+		// Support for the config_runtime.php format of the phpBB 3.1 extension
+		if (!empty($forum_urls))
+		{
+			$this->cache_config['forum'] = $forum_urls;
+		}
 	}
 
 	static public function getSubscribedEvents()
