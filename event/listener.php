@@ -126,7 +126,7 @@ class listener implements EventSubscriberInterface
 				array('pattern' => array('before' => 'forum', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '\.html')),
 				array('pattern' => array('before' => '-f', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '\.html')),
 			),
-			'team' => array(
+			'team'  => array(
 				array('pattern' => 'team\.html', 'replacement' => 'memberlist.php?mode=team'),
 				array('pattern' => 'equipe\.html', 'replacement' => 'memberlist.php?mode=team'),
 			),
@@ -209,7 +209,7 @@ class listener implements EventSubscriberInterface
 	private function build_url($uri, $base_uri, $seo_params, $no_ids = false)
 	{
 		$build_url = '';
-		
+
 		if ($this->check_static_rewrite($base_uri, $seo_params, $build_url))
 		{
 			return $build_url;
@@ -217,7 +217,7 @@ class listener implements EventSubscriberInterface
 
 		$uri_clean = $this->strip_forum_name($base_uri);
 
-		// Check SEO settings. If if fails once, we initiate settings for no ID
+		// Check SEO settings. If it fails once, we initiate settings for no ID
 		$fail_check_seo_params = 3;
 		while ($fail_check_seo_params > 1)
 		{
@@ -236,7 +236,7 @@ class listener implements EventSubscriberInterface
 			return false;
 		}
 
-		// Retriev all IDs available in the URI
+		// Retrieve all IDs available in the URI
 		$ids = $this->get_id($uri_clean, 'pattern', !isset($this->seo_params['noids']));
 
 		// Retrieve the ID based on its position
@@ -267,11 +267,10 @@ class listener implements EventSubscriberInterface
 
 		return $build_url;
 	}
-	
+
 	/**
 	 * Check for static rewrites
 	 *
-	 * @param string $uri
 	 * @param string $base_uri
 	 * @param array  $seo_params
 	 * @param string &$build_url
@@ -287,17 +286,18 @@ class listener implements EventSubscriberInterface
 			{
 				continue;
 			}
-			
+
 			foreach ($seo_param as $seo_config)
 			{
 				if (preg_match('#^/(' . $seo_config['pattern'] . ')$#', $base_uri))
 				{
 					$build_url = $seo_config['replacement'];
+
 					return true;
 				}
 			}
 		}
-		
+
 		return false;
 	}
 
