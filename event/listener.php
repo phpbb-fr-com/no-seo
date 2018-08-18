@@ -22,6 +22,8 @@ class listener implements EventSubscriberInterface
 	protected $phpbb_root_path;
 	/** @var array */
 	protected $seo_params = array();
+	/** @var array */
+	protected $forum_info = array();
 
 	/**
 	 * Constructor
@@ -236,21 +238,31 @@ class listener implements EventSubscriberInterface
 			return false;
 		}
 
-		// Retrieve all IDs available in the URI
-		$ids = $this->get_id($uri_clean, 'pattern', !isset($this->seo_params['noids']));
+		// No forum ID found in the SEO cache file. We check the URI.
+		if (!$no_ids && empty($this->forum_info['id']))
+		{
+			// Retrieve all IDs available in the URI
+			$ids = $this->get_id($uri_clean, 'pattern', !isset($this->seo_params['noids']));
 
-		// Retrieve the ID based on its position
-		$id = $this->get_higher_id($ids, 'id');
+			// Retrieve the ID based on its position
+			$id = $this->get_higher_id($ids);
+		}
 
 		// No ID, we try to find a forum ID
 		if (empty($id['id']))
 		{
-			$forum_info = $this->get_forums_info($uri);
-
-			if (isset($forum_info['id']))
+			// Retrieve forum info on the SEO cache file, if not already filled
+			if (!count($this->forum_info))
 			{
-				$id['id'] = $forum_info['id'];
-				$id = $this->get_higher_id($this->get_id($uri, 'paginate', $fail_check_seo_params == 0), 'num_page');
+				$this->forum_info = $this->get_forums_info($uri);
+			}
+
+			if (isset($this->forum_info['id']))
+			{
+				$id = array(
+					'id'          => $this->forum_info['id'],
+					'replacement' => $this->seo_params['noids0']['replacement'],
+				);
 			}
 		}
 
@@ -311,9 +323,16 @@ class listener implements EventSubscriberInterface
 	 */
 	private function strip_forum_name($uri)
 	{
-		$forum_info = $this->get_forums_info($uri);
+		$uri_suffix = '';
 
-		return sizeof($forum_info) ? substr($uri, strpos($uri, $forum_info['name']) + strlen($forum_info['name'])) : $uri;
+		if (!$this->get_seo_settings('virtual_folder'))
+		{
+			$uri_suffix = '.html';
+		}
+
+		$this->forum_info = $this->get_forums_info($uri);
+
+		return count($this->forum_info) ? substr($uri, strpos($uri, $this->forum_info['name'] . $uri_suffix) + strlen($this->forum_info['name'] . $uri_suffix)) : $uri;
 	}
 
 	/**
@@ -332,11 +351,27 @@ class listener implements EventSubscriberInterface
 			// Returns the first item found.
 			if (strpos($uri, $forum_name))
 			{
-				return array('id' => $forum_id, 'name' => $forum_name);
+				return array('id' => $forum_id, 'name' => $forum_name, 'pos' => 1);
 			}
 		}
 
 		return array();
+	}
+
+	/**
+	 * @param string $name
+	 *
+	 * @return null|mixed
+	 */
+	private function get_seo_settings($name)
+	{
+		// Get the setting value from phpbb_cache.php
+		if (isset($this->cache_config['settings'][$name]))
+		{
+			return $this->cache_config['settings'][$name];
+		}
+
+		return null;
 	}
 
 	/**
@@ -473,28 +508,24 @@ class listener implements EventSubscriberInterface
 	/**
 	 * Get the higher ID
 	 *
-	 * @param array  $ids
-	 * @param string $type
+	 * @param array $ids
 	 *
 	 * @return array
 	 * @access private
 	 */
-	private function get_higher_id($ids, $type)
+	private function get_higher_id($ids)
 	{
 		$higher_id = array();
 		$position = 0;
 
-		if (sizeof($ids))
+		foreach ($ids as $id)
 		{
-			foreach ($ids as $id)
+			if ($id['pos'] > $position)
 			{
-				if ($id['pos'] > $position)
-				{
-					$position = $id['pos'];
-					$higher_id[$type] = $id['id'];
-					$higher_id['num_page'] = $id['num_page'];
-					$higher_id['replacement'] = $id['replacement'];
-				}
+				$position = $id['pos'];
+				$higher_id['num_page'] = isset($id['num_page']) ? $id['num_page'] : 0;
+				$higher_id['id'] = $id['id'];
+				$higher_id['replacement'] = $id['replacement'];
 			}
 		}
 
