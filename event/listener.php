@@ -24,6 +24,8 @@ class listener implements EventSubscriberInterface
 	protected $seo_params = array();
 	/** @var array */
 	protected $forum_info = array();
+	/** @var array */
+	protected $seo_rules = array();
 
 	/**
 	 * Constructor
@@ -85,7 +87,7 @@ class listener implements EventSubscriberInterface
 		//              ),
 		//          ),
 
-		$seo_rules = array(
+		$this->seo_rules = array(
 			'post'  => array(
 				// phpBB2 version
 				array('pattern' => array('before' => 'viewpost_', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p='),
@@ -136,7 +138,7 @@ class listener implements EventSubscriberInterface
 
 		// Do not remove the following array
 		// Only update 'after' and 'before' in the paginate array
-		$seo_rules['noids'] = array(
+		$this->seo_rules['noids'] = array(
 			array('pattern'  => 'DoNotDeleteThisArray', 'replacement' => 'viewforum.php?f=',
 				  'paginate' => array(
 					  'before' => 'page',
@@ -171,7 +173,7 @@ class listener implements EventSubscriberInterface
 
 		if ($this->allow_uri_rebuild($allow_uri_rebuild_params))
 		{
-			$build_url = $this->build_url($uri, $base_uri, $seo_rules);
+			$build_url = $this->build_url($uri, $base_uri);
 
 			// Redirect to the new formatted URL
 			if (!empty($build_url))
@@ -202,17 +204,16 @@ class listener implements EventSubscriberInterface
 	 *
 	 * @param string $uri
 	 * @param string $base_uri
-	 * @param array  $seo_params
-	 * @param bool   $no_ids
 	 *
 	 * @return bool|string
 	 * @access private
 	 */
-	private function build_url($uri, $base_uri, $seo_params, $no_ids = false)
+	private function build_url($uri, $base_uri)
 	{
 		$build_url = '';
+		$no_ids = $this->get_seo_settings('rem_ids');
 
-		if ($this->check_static_rewrite($base_uri, $seo_params, $build_url))
+		if ($this->check_static_rewrite($base_uri, $build_url))
 		{
 			return $build_url;
 		}
@@ -224,7 +225,7 @@ class listener implements EventSubscriberInterface
 		while ($fail_check_seo_params > 1)
 		{
 			$fail_check_seo_params--;
-			if ($this->check_seo_params($uri_clean, $seo_params, $no_ids))
+			if ($this->check_seo_params($uri_clean, $no_ids))
 			{
 				$fail_check_seo_params = 0;
 				continue;
@@ -259,10 +260,22 @@ class listener implements EventSubscriberInterface
 
 			if (isset($this->forum_info['id']))
 			{
-				$id = array(
-					'id'          => $this->forum_info['id'],
-					'replacement' => $this->seo_params['noids0']['replacement'],
-				);
+				// Retrieve pagination information
+				$ids = $this->get_id($uri_clean, 'paginate', true);
+
+				// If pagination, assign value to $id. If not, override with minimal value
+				if (count($ids))
+				{
+					$id = $this->get_higher_id($ids);
+					$id['id'] = $this->forum_info['id'];
+				}
+				else
+				{
+					$id = array(
+						'id'          => $this->forum_info['id'],
+						'replacement' => $this->seo_params['noids0']['replacement'],
+					);
+				}
 			}
 		}
 
@@ -284,15 +297,14 @@ class listener implements EventSubscriberInterface
 	 * Check for static rewrites
 	 *
 	 * @param string $base_uri
-	 * @param array  $seo_params
 	 * @param string &$build_url
 	 *
 	 * @return bool
 	 * @access private
 	 */
-	private function check_static_rewrite($base_uri, $seo_params, &$build_url)
+	private function check_static_rewrite($base_uri, &$build_url)
 	{
-		foreach ($seo_params as $seo_param)
+		foreach ($this->seo_rules as $seo_param)
 		{
 			if (!is_string($seo_param[0]['pattern']))
 			{
@@ -318,7 +330,7 @@ class listener implements EventSubscriberInterface
 	 *
 	 * @param $uri
 	 *
-	 * @return string
+	 * @return bool|string
 	 * @access private
 	 */
 	private function strip_forum_name($uri)
@@ -332,7 +344,21 @@ class listener implements EventSubscriberInterface
 
 		$this->forum_info = $this->get_forums_info($uri);
 
-		return count($this->forum_info) ? substr($uri, strpos($uri, $this->forum_info['name'] . $uri_suffix) + strlen($this->forum_info['name'] . $uri_suffix)) : $uri;
+		if (count($this->forum_info))
+		{
+			if (strpos($uri, $this->forum_info['name'] . '/' . $this->seo_rules['noids'][0]['paginate']['before']))
+			{
+				return ($uri);
+			}
+			else
+			{
+				return (substr($uri, strpos($uri, $this->forum_info['name'] . $uri_suffix) + strlen($this->forum_info['name'] . $uri_suffix)));
+			}
+		}
+		else
+		{
+			return $uri;
+		}
 	}
 
 	/**
@@ -361,7 +387,7 @@ class listener implements EventSubscriberInterface
 	/**
 	 * @param string $name
 	 *
-	 * @return null|mixed
+	 * @return mixed
 	 */
 	private function get_seo_settings($name)
 	{
@@ -371,22 +397,21 @@ class listener implements EventSubscriberInterface
 			return $this->cache_config['settings'][$name];
 		}
 
-		return null;
+		return false;
 	}
 
 	/**
 	 * Checks mandatory SEO params
 	 *
 	 * @param string $uri
-	 * @param array  $params
 	 * @param bool   $no_id
 	 *
 	 * @return bool
 	 * @access private
 	 */
-	private function check_seo_params($uri, $params, $no_id)
+	private function check_seo_params($uri, $no_id)
 	{
-		foreach ($params as $seo_type => $seo_config)
+		foreach ($this->seo_rules as $seo_type => $seo_config)
 		{
 			foreach ($seo_config as $id => $seo_vars)
 			{
