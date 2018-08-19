@@ -455,8 +455,6 @@ class listener implements EventSubscriberInterface
 	 */
 	private function get_preg_match_pattern($seo_rules, $type, $position)
 	{
-		$pattern = '';
-
 		if (!empty($seo_rules[$type][$position]))
 		{
 			if (!empty($seo_rules['paginate']['before']) && $type == 'pattern' && $position == 'after')
@@ -467,6 +465,10 @@ class listener implements EventSubscriberInterface
 			{
 				$pattern = '(' . $seo_rules[$type][$position] . ')';
 			}
+		}
+		else
+		{
+			$pattern = '(DoNotUsePattern)';
 		}
 
 		return $pattern;
