@@ -211,7 +211,6 @@ class listener implements EventSubscriberInterface
 	private function build_url($uri, $base_uri)
 	{
 		$build_url = '';
-		$no_ids = $this->get_seo_settings('rem_ids');
 
 		if ($this->check_static_rewrite($base_uri, $build_url))
 		{
@@ -219,6 +218,9 @@ class listener implements EventSubscriberInterface
 		}
 
 		$uri_clean = $this->strip_forum_name($base_uri);
+
+		// Set $no_ids if the content of $uri_clean and $uri are the same
+		$no_ids = ($uri === $uri_clean) ? $this->get_seo_settings('rem_ids') : false;
 
 		// Check SEO settings. If it fails once, we initiate settings for no ID
 		$fail_check_seo_params = 3;
@@ -240,10 +242,10 @@ class listener implements EventSubscriberInterface
 		}
 
 		// No forum ID found in the SEO cache file. We check the URI.
-		if (!$no_ids && empty($this->forum_info['id']))
+		if (!isset($this->seo_params['noids0']))
 		{
 			// Retrieve all IDs available in the URI
-			$ids = $this->get_id($uri_clean, 'pattern', !isset($this->seo_params['noids']));
+			$ids = $this->get_id($uri_clean, 'pattern', !isset($this->seo_params['noids0']));
 
 			// Retrieve the ID based on its position
 			$id = $this->get_higher_id($ids);
