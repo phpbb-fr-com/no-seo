@@ -22,6 +22,10 @@ class listener implements EventSubscriberInterface
 	protected $phpbb_root_path;
 	/** @var array */
 	protected $seo_params = array();
+	/** @var array */
+	protected $forum_info = array();
+	/** @var array */
+	protected $seo_rules = array();
 
 	/**
 	 * Constructor
@@ -89,7 +93,7 @@ class listener implements EventSubscriberInterface
 		//              ),
 		//          ),
 
-		$seo_rules = array(
+		$this->seo_rules = array(
 			'post'  => array(
 				// phpBB2 version
 				array('pattern' => array('before' => 'viewpost_', 'after' => '\.html'), 'replacement' => 'viewtopic.php?p='),
@@ -132,7 +136,7 @@ class listener implements EventSubscriberInterface
 				array('pattern' => array('before' => 'forum', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '\.html')),
 				array('pattern' => array('before' => '-f', 'after' => ''), 'replacement' => 'viewforum.php?f=', 'paginate' => array('before' => 'page', 'after' => '\.html')),
 			),
-			'team' => array(
+			'team'  => array(
 				array('pattern' => 'team\.html', 'replacement' => 'memberlist.php?mode=team'),
 				array('pattern' => 'equipe\.html', 'replacement' => 'memberlist.php?mode=team'),
 			),
@@ -140,7 +144,7 @@ class listener implements EventSubscriberInterface
 
 		// Do not remove the following array
 		// Only update 'after' and 'before' in the paginate array
-		$seo_rules['noids'] = array(
+		$this->seo_rules['noids'] = array(
 			array('pattern'  => 'DoNotDeleteThisArray', 'replacement' => 'viewforum.php?f=',
 				  'paginate' => array(
 					  'before' => 'page',
@@ -175,7 +179,7 @@ class listener implements EventSubscriberInterface
 
 		if ($this->allow_uri_rebuild($allow_uri_rebuild_params))
 		{
-			$build_url = $this->build_url($uri, $base_uri, $seo_rules);
+			$build_url = $this->build_url($uri, $base_uri);
 
 			// Redirect to the new formatted URL
 			if (!empty($build_url))
@@ -206,29 +210,30 @@ class listener implements EventSubscriberInterface
 	 *
 	 * @param string $uri
 	 * @param string $base_uri
-	 * @param array  $seo_params
-	 * @param bool   $no_ids
 	 *
 	 * @return bool|string
 	 * @access private
 	 */
-	private function build_url($uri, $base_uri, $seo_params, $no_ids = false)
+	private function build_url($uri, $base_uri)
 	{
 		$build_url = '';
-		
-		if ($this->check_static_rewrite($base_uri, $seo_params, $build_url))
+
+		if ($this->check_static_rewrite($base_uri, $build_url))
 		{
 			return $build_url;
 		}
 
 		$uri_clean = $this->strip_forum_name($base_uri);
 
-		// Check SEO settings. If if fails once, we initiate settings for no ID
+		// Set $no_ids if the content of $uri_clean and $uri are the same
+		$no_ids = ($uri === $uri_clean) ? $this->get_seo_settings('rem_ids') : false;
+
+		// Check SEO settings. If it fails once, we initiate settings for no ID
 		$fail_check_seo_params = 3;
 		while ($fail_check_seo_params > 1)
 		{
 			$fail_check_seo_params--;
-			if ($this->check_seo_params($uri_clean, $seo_params, $no_ids))
+			if ($this->check_seo_params($uri_clean, $no_ids))
 			{
 				$fail_check_seo_params = 0;
 				continue;
@@ -242,21 +247,43 @@ class listener implements EventSubscriberInterface
 			return false;
 		}
 
-		// Retriev all IDs available in the URI
-		$ids = $this->get_id($uri_clean, 'pattern', !isset($this->seo_params['noids']));
+		// No forum ID found in the SEO cache file. We check the URI.
+		if (!isset($this->seo_params['noids0']))
+		{
+			// Retrieve all IDs available in the URI
+			$ids = $this->get_id($uri_clean, 'pattern', !isset($this->seo_params['noids0']));
 
-		// Retrieve the ID based on its position
-		$id = $this->get_higher_id($ids, 'id');
+			// Retrieve the ID based on its position
+			$id = $this->get_higher_id($ids);
+		}
 
 		// No ID, we try to find a forum ID
 		if (empty($id['id']))
 		{
-			$forum_info = $this->get_forums_info($uri);
-
-			if (isset($forum_info['id']))
+			// Retrieve forum info on the SEO cache file, if not already filled
+			if (!count($this->forum_info))
 			{
-				$id['id'] = $forum_info['id'];
-				$id = $this->get_higher_id($this->get_id($uri, 'paginate', $fail_check_seo_params == 0), 'num_page');
+				$this->forum_info = $this->get_forums_info($uri);
+			}
+
+			if (isset($this->forum_info['id']))
+			{
+				// Retrieve pagination information
+				$ids = $this->get_id($uri_clean, 'paginate', true);
+
+				// If pagination, assign value to $id. If not, override with minimal value
+				if (count($ids))
+				{
+					$id = $this->get_higher_id($ids);
+					$id['id'] = $this->forum_info['id'];
+				}
+				else
+				{
+					$id = array(
+						'id'          => $this->forum_info['id'],
+						'replacement' => $this->seo_params['noids0']['replacement'],
+					);
+				}
 			}
 		}
 
@@ -273,37 +300,36 @@ class listener implements EventSubscriberInterface
 
 		return $build_url;
 	}
-	
+
 	/**
 	 * Check for static rewrites
 	 *
-	 * @param string $uri
 	 * @param string $base_uri
-	 * @param array  $seo_params
 	 * @param string &$build_url
 	 *
 	 * @return bool
 	 * @access private
 	 */
-	private function check_static_rewrite($base_uri, $seo_params, &$build_url)
+	private function check_static_rewrite($base_uri, &$build_url)
 	{
-		foreach ($seo_params as $seo_param)
+		foreach ($this->seo_rules as $seo_param)
 		{
 			if (!is_string($seo_param[0]['pattern']))
 			{
 				continue;
 			}
-			
+
 			foreach ($seo_param as $seo_config)
 			{
 				if (preg_match('#^/(' . $seo_config['pattern'] . ')$#', $base_uri))
 				{
 					$build_url = $seo_config['replacement'];
+
 					return true;
 				}
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -312,14 +338,39 @@ class listener implements EventSubscriberInterface
 	 *
 	 * @param $uri
 	 *
-	 * @return string
+	 * @return bool|string
 	 * @access private
 	 */
 	private function strip_forum_name($uri)
 	{
-		$forum_info = $this->get_forums_info($uri);
+		$uri_suffix = '';
 
-		return sizeof($forum_info) ? substr($uri, strpos($uri, $forum_info['name']) + strlen($forum_info['name'])) : $uri;
+		if (!$this->get_seo_settings('virtual_folder'))
+		{
+			$uri_suffix = '.html';
+		}
+
+		$this->forum_info = $this->get_forums_info($uri);
+
+		if (count($this->forum_info))
+		{
+			if (strpos($uri, $this->forum_info['name'] . '/' . $this->seo_rules['noids'][0]['paginate']['before']))
+			{
+				return ($uri);
+			}
+			else if (strpos($uri, $this->forum_info['name'] . $uri_suffix))
+			{
+				return (substr($uri, strpos($uri, $this->forum_info['name'] . $uri_suffix) + strlen($this->forum_info['name'] . $uri_suffix)));
+			}
+			else
+			{
+				return (substr($uri, strpos($uri, $this->forum_info['name']) + strlen($this->forum_info['name'])));
+			}
+		}
+		else
+		{
+			return $uri;
+		}
 	}
 
 	/**
@@ -338,7 +389,7 @@ class listener implements EventSubscriberInterface
 			// Returns the first item found.
 			if (strpos($uri, $forum_name))
 			{
-				return array('id' => $forum_id, 'name' => $forum_name);
+				return array('id' => $forum_id, 'name' => $forum_name, 'pos' => 1);
 			}
 		}
 
@@ -346,18 +397,33 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
+	 * @param string $name
+	 *
+	 * @return mixed
+	 */
+	private function get_seo_settings($name)
+	{
+		// Get the setting value from phpbb_cache.php
+		if (isset($this->cache_config['settings'][$name]))
+		{
+			return $this->cache_config['settings'][$name];
+		}
+
+		return false;
+	}
+
+	/**
 	 * Checks mandatory SEO params
 	 *
 	 * @param string $uri
-	 * @param array  $params
 	 * @param bool   $no_id
 	 *
 	 * @return bool
 	 * @access private
 	 */
-	private function check_seo_params($uri, $params, $no_id)
+	private function check_seo_params($uri, $no_id)
 	{
-		foreach ($params as $seo_type => $seo_config)
+		foreach ($this->seo_rules as $seo_type => $seo_config)
 		{
 			foreach ($seo_config as $id => $seo_vars)
 			{
@@ -397,8 +463,6 @@ class listener implements EventSubscriberInterface
 	 */
 	private function get_preg_match_pattern($seo_rules, $type, $position)
 	{
-		$pattern = '';
-
 		if (!empty($seo_rules[$type][$position]))
 		{
 			if (!empty($seo_rules['paginate']['before']) && $type == 'pattern' && $position == 'after')
@@ -409,6 +473,10 @@ class listener implements EventSubscriberInterface
 			{
 				$pattern = '(' . $seo_rules[$type][$position] . ')';
 			}
+		}
+		else
+		{
+			$pattern = '(DoNotUsePattern)';
 		}
 
 		return $pattern;
@@ -479,28 +547,24 @@ class listener implements EventSubscriberInterface
 	/**
 	 * Get the higher ID
 	 *
-	 * @param array  $ids
-	 * @param string $type
+	 * @param array $ids
 	 *
 	 * @return array
 	 * @access private
 	 */
-	private function get_higher_id($ids, $type)
+	private function get_higher_id($ids)
 	{
 		$higher_id = array();
 		$position = 0;
 
-		if (sizeof($ids))
+		foreach ($ids as $id)
 		{
-			foreach ($ids as $id)
+			if ($id['pos'] > $position)
 			{
-				if ($id['pos'] > $position)
-				{
-					$position = $id['pos'];
-					$higher_id[$type] = $id['id'];
-					$higher_id['num_page'] = $id['num_page'];
-					$higher_id['replacement'] = $id['replacement'];
-				}
+				$position = $id['pos'];
+				$higher_id['num_page'] = isset($id['num_page']) ? $id['num_page'] : 0;
+				$higher_id['id'] = $id['id'];
+				$higher_id['replacement'] = $id['replacement'];
 			}
 		}
 
