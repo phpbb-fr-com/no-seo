@@ -1,5 +1,5 @@
 services:
-   empreintesduweb.seoregression.listener:
+    empreintesduweb.seoregression.listener:
         class: empreintesduweb\seoregression\event\listener
         arguments:
             - '@config'
