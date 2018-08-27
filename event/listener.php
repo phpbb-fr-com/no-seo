@@ -55,10 +55,16 @@ class listener implements EventSubscriberInterface
 			include(PHPBB_SEO_CACHE);
 		}
 
-		// Support for the config.runtime.php format of the phpBB 3.1 extension
+		// If you use "Ultimate phpBB SEO Friendly URL" extension, copy as is the content of "config.runtime.php"
+		// in the file "<ext_path>/includes/phpbb_cache.php"
 		if (!empty($forum_urls))
 		{
 			$this->cache_config['forum'] = $forum_urls;
+		}
+
+		if (!empty($settings))
+		{
+			$this->cache_config['settings'] = $settings;
 		}
 	}
 
