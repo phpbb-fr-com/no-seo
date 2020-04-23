@@ -2,6 +2,7 @@
 
 ## 1.2.3 - 23-04-2020
 - Replace `sizeof()` by `count()` function
+- Minor code optimization
 
 ## 1.2.2 - 28-08-2018
 - Prise en charge du fichier de configuration de l’extension USU

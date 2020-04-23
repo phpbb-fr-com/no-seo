@@ -368,15 +368,11 @@ class listener implements EventSubscriberInterface
 			{
 				return (substr($uri, strpos($uri, $this->forum_info['name'] . $uri_suffix) + strlen($this->forum_info['name'] . $uri_suffix)));
 			}
-			else
-			{
-				return (substr($uri, strpos($uri, $this->forum_info['name']) + strlen($this->forum_info['name'])));
-			}
+
+			return (substr($uri, strpos($uri, $this->forum_info['name']) + strlen($this->forum_info['name'])));
 		}
-		else
-		{
-			return $uri;
-		}
+
+		return $uri;
 	}
 
 	/**
