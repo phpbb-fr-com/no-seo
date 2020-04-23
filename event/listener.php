@@ -310,7 +310,7 @@ class listener implements EventSubscriberInterface
 	/**
 	 * Check for static rewrites
 	 *
-	 * @param string $base_uri
+	 * @param string  $base_uri
 	 * @param string &$build_url
 	 *
 	 * @return bool
@@ -454,7 +454,7 @@ class listener implements EventSubscriberInterface
 		}
 		unset($seo_type, $seo_config);
 
-		return sizeof($this->seo_params) ? true : false;
+		return count($this->seo_params) ? true : false;
 	}
 
 	/**

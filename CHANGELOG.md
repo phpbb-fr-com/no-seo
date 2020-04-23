@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.3 - 23-04-2020
+- Replace `sizeof()` by `count()` function
+
 ## 1.2.2 - 28-08-2018
 - Prise en charge du fichier de configuration de l’extension USU
 - Correction d'un problème ne permettant pas de traiter les forums sans ID qui ne sont réécrits au format "répertoire virtuel" (issue #1)
