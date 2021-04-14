@@ -89,12 +89,12 @@ class listener implements EventSubscriberInterface
 		//              array(
 		//                  'pattern' => array(                     // Mandatory - Before and After pattern requires to locate the ID.
 		//                      'before' => 'post',                 //             The after pattern is not mandatory, but recommended
-		//                      'after'  => '.html',                // Warning:    The chars "/" needs to be escaped with "\"
+		//                      'after'  => '\.html',                // Warning:    The chars "/" needs to be escaped with "\"
 		//                  ),
 		//                  'replacement' => 'viewtopic.php?p=',    // Mandatory - First part of the URI to generate the new one.
 		//                  'paginate' => array(                    // Optional  - Array used for pagination
 		//                      'before' => '-'                     //             If set, must have a start and end value
-		//                      'after'  => '.html'                 //             Pagination example: topic1234-60.html | forum-f1234/page60.html
+		//                      'after'  => '\.html'                 //             Pagination example: topic1234-60.html | forum-f1234/page60.html
 		//                  ),
 		//              ),
 		//          ),
@@ -115,7 +115,7 @@ class listener implements EventSubscriberInterface
 				 * http://forums.phpbb-fr.com/viewtopic_32090_s30.html (start 30)
 				 * http://forums.phpbb-fr.com/viewtopic_32215_pd0_poasc_s30.html (start 30 + ordering parameters, we will just ignore them…)
 				 */
-				array('pattern' => array('before' => 'viewtopic_', 'after' => '.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '(?:_.+)?_s', 'after' => '.html')),
+				array('pattern' => array('before' => 'viewtopic_', 'after' => '\.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '(?:_.+)?_s', 'after' => '\.html')),
 
 				// phpBB3 versions
 				array('pattern' => array('before' => 'topic', 'after' => '\.html'), 'replacement' => 'viewtopic.php?t=', 'paginate' => array('before' => '-', 'after' => '\.html')),
